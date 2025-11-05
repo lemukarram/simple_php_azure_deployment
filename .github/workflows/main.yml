@@ -1,0 +1,89 @@
+# This is a GitHub Actions workflow file.
+# It should be placed in your repo at: .github/workflows/main.yml
+
+# Name of the workflow
+name: Build and Deploy to Azure
+
+# ---
+# 1. TRIGGER
+# ---
+# This workflow runs on any push event to the 'main' branch
+# This includes when you merge a Pull Request into 'main'
+on:
+  push:
+    branches:
+      - main
+
+# ---
+# 2. ENVIRONMENT VARIABLES
+# ---
+# Set environment variables for your app.
+# !! IMPORTANT: Change these values to match your Azure setup !!
+env:
+  AZURE_WEB_APP_NAME: 'muklaravelapp01'       # The name of your Azure App Service
+  AZURE_CONTAINER_REGISTRY: 'muklaravelapp01'       # The name of your Azure Container Registry (e.g., techwithmukacr)
+  IMAGE_NAME: 'tech-with-muk-app'                 # The name of the image to build
+
+# ---
+# 3. JOBS
+# ---
+# Define the sequence of tasks to run
+jobs:
+  build-and-deploy:
+    # Use the latest Ubuntu runner
+    runs-on: ubuntu-latest
+
+    # Define the steps
+    steps:
+      # ---
+      # STEP 1: CHECKOUT CODE
+      # ---
+      # Checks out your repository's code so the workflow can use it
+      - name: 'Checkout GitHub Code'
+        uses: actions/checkout@v3
+
+      # ---
+      # STEP 2: LOG IN TO AZURE
+      # ---
+      # Logs in to Azure using a Service Principal.
+      # You must create an 'AZURE_CREDENTIALS' secret in your GitHub repo.
+      - name: 'Log in to Azure'
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # ---
+      # STEP 3: LOG IN TO AZURE CONTAINER REGISTRY (ACR)
+      # ---
+      # Uses the Azure login context to securely log the Docker client
+      # into your specific Azure Container Registry.
+      - name: 'Log in to Azure Container Registry'
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
+
+      # ---
+      # STEP 4: BUILD AND PUSH DOCKER IMAGE
+      # ---
+      # This step builds your Dockerfile and pushes the resulting image
+      # to your ACR. It tags the image with the unique commit SHA.
+      - name: 'Build and push image to ACR'
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          # Tags the image with the ACR server, image name, and commit SHA
+          tags: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
+      # ---
+      # STEP 5: DEPLOY TO AZURE APP SERVICE
+      # ---
+      # This action finds your App Service and tells it to deploy
+      # the new image tag you just pushed to ACR.
+      - name: 'Deploy to Azure App Service'
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ env.AZURE_WEB_APP_NAME }}
+          # Specifies the exact image and tag to deploy
+          images: '${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}'

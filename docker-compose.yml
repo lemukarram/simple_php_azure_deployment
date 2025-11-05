@@ -1,0 +1,19 @@
+
+
+# Define the services (containers) your app needs
+services:
+  # We'll call our PHP/Apache service 'web'
+  web:
+    # Tell Docker Compose to build an image from the
+    # Dockerfile in the current directory ('.')
+    build: .
+    # Map port 8080 on your local machine to port 80
+    # inside the container (where Apache is running)
+    ports:
+      - "8080:80"
+    # Mount the current directory into the container
+    # This is great for development. If you change
+    # index.php, the change will appear in the
+    # container without rebuilding.
+    volumes:
+      - ./index.php:/var/www/html/index.php
