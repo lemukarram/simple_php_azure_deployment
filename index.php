@@ -20,6 +20,7 @@
     </style>
 </head>
 <body>
-    <h1>Welcome to Tech with Muk ok</h1>
+    <h1>Welcome to Tech with Muk</h1>
+    <h1>Updated</h1>
 </body>
 </html>
