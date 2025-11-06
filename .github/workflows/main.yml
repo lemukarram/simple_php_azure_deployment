@@ -21,8 +21,8 @@ on:
 # !! IMPORTANT: Change these values to match your Azure setup !!
 env:
   AZURE_WEB_APP_NAME: 'muklaravelapp01'       # The name of your Azure App Service
-  AZURE_CONTAINER_REGISTRY: 'muklaravelapp01' # The name of your Azure Container Registry
-  IMAGE_NAME: 'tech-with-muk-app'             # The name of the image to build
+  AZURE_CONTAINER_REGISTRY: 'muklaravelapp01'       # The name of your Azure Container Registry (e.g., techwithmukacr)
+  IMAGE_NAME: 'tech-with-muk-app'                 # The name of the image to build
 
 # ---
 # 3. JOBS
@@ -46,7 +46,7 @@ jobs:
       # STEP 2: LOG IN TO AZURE
       # ---
       # Logs in to Azure using a Service Principal.
-      # This is still needed for Step 5 (Deploy to App Service).
+      # You must create an 'AZURE_CREDENTIALS' secret in your GitHub repo.
       - name: 'Log in to Azure'
         uses: azure/login@v1
         with:
@@ -55,13 +55,12 @@ jobs:
       # ---
       # STEP 3: LOG IN TO AZURE CONTAINER REGISTRY (ACR)
       # ---
-      # Logs in to ACR using the Admin username and password secrets.
+      # Uses the Azure login context to securely log the Docker client
+      # into your specific Azure Container Registry.
       - name: 'Log in to Azure Container Registry'
         uses: azure/docker-login@v1
         with:
           login-server: ${{ env.AZURE_CONTAINER_REGISTRY }}.azurecr.io
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
 
       # ---
       # STEP 4: BUILD AND PUSH DOCKER IMAGE
